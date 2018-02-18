@@ -25,7 +25,7 @@ type IP4 struct{}
 // IP6
 type IP6 struct{}
 
-type Jail struct {
+type jail struct {
 	Version  uint32
 	Path     uintptr
 	Name     uintptr
@@ -60,8 +60,8 @@ func (j *JailOpts) validate() error {
 	return nil
 }
 
-// New takes the given parameters, validates, and creates a new jail
-func New(jo *JailOpts) (int, error) {
+// Jail takes the given parameters, validates, and creates a new jail
+func Jail(jo *JailOpts) (int, error) {
 	if err := jo.validate(); err != nil {
 		return 0, err
 	}
@@ -77,7 +77,7 @@ func New(jo *JailOpts) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	jail := &Jail{
+	jail := &jail{
 		Version:  uint32(jo.Version),
 		Path:     uintptr(unsafe.Pointer(jp)),
 		Name:     uintptr(unsafe.Pointer(jn)),
@@ -96,8 +96,8 @@ func New(jo *JailOpts) (int, error) {
 }
 
 // Clone creates a new version of the previously created jail
-func (j *Jail) Clone() (*Jail, int, error) {
-	nj := &Jail{
+func (j *jail) Clone() (int, error) {
+	nj := &jail{
 		Version:  j.Version,
 		Path:     j.Path,
 		Name:     j.Name,
@@ -105,9 +105,9 @@ func (j *Jail) Clone() (*Jail, int, error) {
 	}
 	r1, _, e1 := syscall.Syscall(sysJail, uintptr(unsafe.Pointer(nj)), 0, 0)
 	if e1 != 0 {
-		return nil, 0, fmt.Errorf("%d", e1)
+		return 0, fmt.Errorf("%d", e1)
 	}
-	return nj, int(r1), nil
+	return int(r1), nil
 }
 
 // IOVEC
@@ -116,44 +116,60 @@ type IOVEC struct {
 	IOVLen  int64
 }
 
-// NamedPars
-type NamedPars map[string]interface{}
+const (
+	// CreateFlag Create a new jail. If a jid or name parameters exists, they must
+	// not refer to an existing jail.
+	CreateFlag = uintptr(0x01)
+	// UpdateFlag Modify an existing jail. One of the jid or name parameters must
+	// exist, and must refer to an existing jail. If both JAIL_CREATE and JAIL_UPDATE
+	// are set, a jail will be created if it does not yet exist, and modified if it does exist.
+	UpdateFlag = uintptr(0x02)
+	// AttachFlag In addition to creating or modifying the jail, attach the current process
+	// to it, as with the jail_attach() system call.
+	AttachFlag = uintptr(0x04)
+	// DyingFlag Allow setting a jail that is in the process of being removed.
+	DyingFlag = uintptr(0x08)
+	// SetMaskFlag
+	SetMaskFlag = uintptr(0x0f)
+	// GetMaskFlag
+	GetMaskFlag = uintptr(0x08)
+)
 
-// validate makes sure the given map is usable
-func (NamedPars) validate() error {
-	return nil
-}
-
-// JailGet
-func JailGet() error {
-	_, _, e1 := syscall.Syscall(sysJailGet, 0, 0, 0)
+// Set
+func Set(i *IOVEC, flags uintptr) error {
+	iovec := uintptr(unsafe.Pointer(i))
+	_, _, e1 := syscall.Syscall(sysJailSet, iovec, 0, flags)
 	if e1 != 0 {
 		return fmt.Errorf("%d", e1)
 	}
 	return nil
 }
 
-// JailSet
-func JailSet() error {
-	_, _, e1 := syscall.Syscall(sysJailSet, 0, 0, 0)
+// Get
+func Get(i *IOVEC, flags uintptr) error {
+	iovec := uintptr(unsafe.Pointer(i))
+	_, _, e1 := syscall.Syscall(sysJailGet, iovec, 0, flags)
 	if e1 != 0 {
 		return fmt.Errorf("%d", e1)
 	}
 	return nil
 }
 
-// JailAttach
-func JailAttach(jid int) error {
-	_, _, e1 := syscall.Syscall(sysJailAttach, uintptr(jid), 0, 0)
+// Attach receives a jail ID and attempts to attach the current
+// process to that jail
+func Attach(jailID int) error {
+	jid := uintptr(unsafe.Pointer(&jailID))
+	_, _, e1 := syscall.Syscall(sysJailAttach, jid, 0, 0)
 	if e1 != 0 {
 		return fmt.Errorf("%d", e1)
 	}
 	return nil
 }
 
-// JailRemove
-func JailRemove(jid int) error {
-	_, _, e1 := syscall.Syscall(sysJailRemove, uintptr(jid), 0, 0)
+// Remove receives a jail ID and attempts to remove the associated jail
+func Remove(jailID int) error {
+	jid := uintptr(unsafe.Pointer(&jailID))
+	_, _, e1 := syscall.Syscall(sysJailRemove, jid, 0, 0)
 	if e1 != 0 {
 		return fmt.Errorf("%d", e1)
 	}
