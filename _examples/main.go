@@ -10,7 +10,7 @@ import (
 
 func main() {
 	jo := &jail.JailOpts{
-		Path:     "/path/to/jail",
+		Path:     "/zroot/jails/build",
 		Name:     "jailname",
 		Hostname: "hostname",
 		Chdir:    true,
