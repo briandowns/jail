@@ -1,6 +1,6 @@
 package jail
 
-// errors in this file have been copied from man 2 jail
+// errors in this file have been copied from https://github.com/freebsd/freebsd/blob/master/sys/sys/errno.h
 
 const (
 	eperm        = 1
