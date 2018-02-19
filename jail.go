@@ -30,10 +30,10 @@ type jail struct {
 	Path     uintptr
 	Name     uintptr
 	Hostname uintptr
-	/*IP4s     uint32
-	IP6s     uint32
-	IP4r     interface{}
-	IP6      interface{}*/
+	// IP4s     uint32
+	// IP6s     uint32
+	// IP4r     interface{}
+	// IP6      interface{}
 }
 
 // JailOpts hlds the options to be passed in to
