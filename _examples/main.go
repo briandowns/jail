@@ -14,6 +14,7 @@ func main() {
 		Path:     "/zroot/jails/build",
 		Name:     "jailname",
 		Hostname: "hostname",
+		IP4:      "192.168.0.200",
 		Chdir:    true,
 	}
 
@@ -23,7 +24,7 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Printf("JID: %d\n", jid)
-	time.Sleep(30*time.Second)
+	time.Sleep(30 * time.Second)
 	fmt.Println("/ director listing in jail")
 	files, err := ioutil.ReadDir("./")
 	if err != nil {
