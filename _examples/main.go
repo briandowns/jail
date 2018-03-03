@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/briandowns/jail"
 )
 
 func main() {
 	jo := &jail.JailOpts{
-		Path:     "/path/to/jail",
+		Path:     "/zroot/jails/build",
 		Name:     "jailname",
 		Hostname: "hostname",
 		Chdir:    true,
@@ -22,7 +23,7 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Printf("JID: %d\n", jid)
-
+	time.Sleep(30*time.Second)
 	fmt.Println("/ director listing in jail")
 	files, err := ioutil.ReadDir("./")
 	if err != nil {

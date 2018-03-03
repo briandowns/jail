@@ -30,10 +30,10 @@ type jail struct {
 	Path     uintptr
 	Name     uintptr
 	Hostname uintptr
-	// IP4s     uint32
-	// IP6s     uint32
-	// IP4r     interface{}
-	// IP6      interface{}
+	IP4s     uint32
+	IP6s     uint32
+	IP4r     interface{}
+	IP6r     interface{}
 }
 
 // JailOpts hlds the options to be passed in to
@@ -48,9 +48,6 @@ type JailOpts struct {
 
 // validate makes sure the required fields are present
 func (j *JailOpts) validate() error {
-	if j.Version != jailAPIVersion {
-		return errors.New("invalid version")
-	}
 	if j.Path == "" {
 		return errors.New("missing path")
 	}
@@ -78,7 +75,7 @@ func Jail(jo *JailOpts) (int, error) {
 		return 0, err
 	}
 	jail := &jail{
-		Version:  uint32(jo.Version),
+		Version:  uint32(0),
 		Path:     uintptr(unsafe.Pointer(jp)),
 		Name:     uintptr(unsafe.Pointer(jn)),
 		Hostname: uintptr(unsafe.Pointer(hn)),
@@ -88,7 +85,7 @@ func Jail(jo *JailOpts) (int, error) {
 		return 0, fmt.Errorf("%d", e1)
 	}
 	if jo.Chdir {
-		if err := os.Chdir(jo.Path); err != nil {
+		if err := os.Chdir("/"); err != nil {
 			return 0, err
 		}
 	}
