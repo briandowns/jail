@@ -19,6 +19,25 @@ const (
 	sysJailRemove = 508
 )
 
+const (
+	// CreateFlag Create a new jail. If a jid or name parameters exists, they must
+	// not refer to an existing jail.
+	CreateFlag = uintptr(0x01)
+	// UpdateFlag Modify an existing jail. One of the jid or name parameters must
+	// exist, and must refer to an existing jail. If both JAIL_CREATE and JAIL_UPDATE
+	// are set, a jail will be created if it does not yet exist, and modified if it does exist.
+	UpdateFlag = uintptr(0x02)
+	// AttachFlag In addition to creating or modifying the jail, attach the current process
+	// to it, as with the jail_attach() system call.
+	AttachFlag = uintptr(0x04)
+	// DyingFlag Allow setting a jail that is in the process of being removed.
+	DyingFlag = uintptr(0x08)
+	// SetMaskFlag
+	SetMaskFlag = uintptr(0x0f)
+	// GetMaskFlag
+	GetMaskFlag = uintptr(0x08)
+)
+
 const jailAPIVersion = 2
 
 type jail struct {
@@ -88,21 +107,29 @@ func Jail(jo *JailOpts) (int, error) {
 		uint32ip = uip
 	}*/
 	//t := tester()
-	t := uint32(3232235720)
-	x := ((t>>24)&0xff)    |
+	//t := uint32(3232235720)
+	/*x := ((t>>24)&0xff)    |
              ((t<<8)&0xff0000) |
              ((t>>8)&0xff00)   |
              ((t<<24)&0xff000000)
-	iat := inAddrT(x)
-	ia := &inAddr{sAddr: iat}
+
+	iat := inAddrT(x)*/
+	oip := net.ParseIP("192.168.0.200")
+	nip := oip.To4()
+	//x1 := binary.LittleEndian.Uint32(nip)
+	//x1 := uint32(uint(nip[0]) | uint(nip[1])<<8 | uint(nip[2])<<16 | uint(nip[3])<<32)
+	x1 := uint32(uint(nip[3]) | uint(nip[2])<<8 | uint(nip[1])<<16 | uint(nip[0])<<32)
+	ia := &inAddr{sAddr: x1}
+
 	fmt.Printf("%+v\n", ia)
-	var j *jail
-	j = &jail{
-	Version:  uint32(0),
-	Path:     uintptr(unsafe.Pointer(jp)),
-	Hostname: uintptr(unsafe.Pointer(hn)),
-	Name:     uintptr(unsafe.Pointer(jn)),
-	IP4s:     uint32(1),
+
+	j := &jail{
+		Version:  uint32(0),
+		Path:     uintptr(unsafe.Pointer(jp)),
+		Hostname: uintptr(unsafe.Pointer(hn)),
+		Name:     uintptr(unsafe.Pointer(jn)),
+		IP4s:     uint32(1),
+		IP6s:     uint32(0),
 		IP4:      uintptr(unsafe.Pointer(ia)),
 	}
 	r1, _, e1 := syscall.Syscall(sysJail, uintptr(unsafe.Pointer(j)), 0, 0)
@@ -132,33 +159,30 @@ func (j *jail) Clone() (int, error) {
 	return int(r1), nil
 }
 
-// IOVEC
-type IOVEC struct {
-	IOVBase interface{}
-	IOVLen  int64
+// Params contains the individual settings passed in to either get 
+// or set a jail
+type Params map[string]interface{}
+
+// NewParams creates a new value of type Params by 
+// initializing the underluing map
+func NewParams() Params {
+	return make(map[string]interface{})
 }
 
-const (
-	// CreateFlag Create a new jail. If a jid or name parameters exists, they must
-	// not refer to an existing jail.
-	CreateFlag = uintptr(0x01)
-	// UpdateFlag Modify an existing jail. One of the jid or name parameters must
-	// exist, and must refer to an existing jail. If both JAIL_CREATE and JAIL_UPDATE
-	// are set, a jail will be created if it does not yet exist, and modified if it does exist.
-	UpdateFlag = uintptr(0x02)
-	// AttachFlag In addition to creating or modifying the jail, attach the current process
-	// to it, as with the jail_attach() system call.
-	AttachFlag = uintptr(0x04)
-	// DyingFlag Allow setting a jail that is in the process of being removed.
-	DyingFlag = uintptr(0x08)
-	// SetMaskFlag
-	SetMaskFlag = uintptr(0x0f)
-	// GetMaskFlag
-	GetMaskFlag = uintptr(0x08)
-)
+// Add adds the given key and value to the params map
+func (p Params) Add(k string, v interface{}) error {
+	if p == nil {
+		return errros.New("cannot assign values to nil map")
+	}
+	if _, ok := p[k]; !ok {
+		p[k] = v
+		return nil
+	}
+	return fmt.Errorf("key of %s already set with value of %v", k, p[k])
+}
 
 // Set
-func Set(i *IOVEC, flags uintptr) error {
+func Set(params Params, flags uintptr) error {
 	iovec := uintptr(unsafe.Pointer(i))
 	_, _, e1 := syscall.Syscall(sysJailSet, iovec, 0, flags)
 	if e1 != 0 {
@@ -168,7 +192,7 @@ func Set(i *IOVEC, flags uintptr) error {
 }
 
 // Get
-func Get(i *IOVEC, flags uintptr) error {
+func Get(params Params, flags uintptr) error {
 	iovec := uintptr(unsafe.Pointer(i))
 	_, _, e1 := syscall.Syscall(sysJailGet, iovec, 0, flags)
 	if e1 != 0 {
