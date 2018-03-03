@@ -2,8 +2,10 @@
 package jail
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"syscall"
 	"unsafe"
@@ -19,12 +21,6 @@ const (
 
 const jailAPIVersion = 2
 
-// IP4
-type IP4 struct{}
-
-// IP6
-type IP6 struct{}
-
 type jail struct {
 	Version  uint32
 	Path     uintptr
@@ -32,8 +28,8 @@ type jail struct {
 	Hostname uintptr
 	IP4s     uint32
 	IP6s     uint32
-	IP4r     interface{}
-	IP6r     interface{}
+	IP4      uintptr
+	IP6      uintptr
 }
 
 // JailOpts hlds the options to be passed in to
@@ -43,7 +39,16 @@ type JailOpts struct {
 	Path     string
 	Name     string
 	Hostname string
+	IP4      string
 	Chdir    bool
+}
+
+// typedef uint32_t in_addr_t
+type inAddrT uint32
+
+// inAddr
+type inAddr struct {
+	sAddr inAddrT
 }
 
 // validate makes sure the required fields are present
@@ -74,13 +79,33 @@ func Jail(jo *JailOpts) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	jail := &jail{
-		Version:  uint32(0),
-		Path:     uintptr(unsafe.Pointer(jp)),
-		Name:     uintptr(unsafe.Pointer(jn)),
-		Hostname: uintptr(unsafe.Pointer(hn)),
+	/*var uint32ip uint32
+	if jo.IP4 != "" {
+		uip, err := ipToUint32(jo.IP4)
+		if err != nil {
+			return 0, err
+		}
+		uint32ip = uip
+	}*/
+	//t := tester()
+	t := uint32(3232235720)
+	x := ((t>>24)&0xff)    |
+             ((t<<8)&0xff0000) |
+             ((t>>8)&0xff00)   |
+             ((t<<24)&0xff000000)
+	iat := inAddrT(x)
+	ia := &inAddr{sAddr: iat}
+	fmt.Printf("%+v\n", ia)
+	var j *jail
+	j = &jail{
+	Version:  uint32(0),
+	Path:     uintptr(unsafe.Pointer(jp)),
+	Hostname: uintptr(unsafe.Pointer(hn)),
+	Name:     uintptr(unsafe.Pointer(jn)),
+	IP4s:     uint32(1),
+		IP4:      uintptr(unsafe.Pointer(ia)),
 	}
-	r1, _, e1 := syscall.Syscall(sysJail, uintptr(unsafe.Pointer(jail)), 0, 0)
+	r1, _, e1 := syscall.Syscall(sysJail, uintptr(unsafe.Pointer(j)), 0, 0)
 	if e1 != 0 {
 		return 0, fmt.Errorf("%d", e1)
 	}
@@ -172,3 +197,39 @@ func Remove(jailID int) error {
 	}
 	return nil
 }
+
+func tester() uint32 {
+	buf := make([]byte, 4)
+	binary.BigEndian.PutUint32(buf, uint32(3232235720))
+	return binary.BigEndian.Uint32(buf)
+}
+
+// ipToUint32 converts a string representation of an IP address into
+// an uint32
+//func ipToUint32(sip string) (uint32, error) {
+	/*var ip net.IP
+	ip, _, err := net.ParseCIDR(sip)
+	if err != nil {
+		return 0, err
+	}
+        fmt.Println(ip.String())*/
+	// convert string to net.IP
+	/*if len(ip) == 16 {
+		return binary.BigEndian.Uint32(ip[12:16]), nil
+	}*/
+	//ip := net.ParseIP(sip)
+	//fmt.Println(len(ip))
+	//fmt.Println(ip.String())
+	//return binary.LittleEndian.Uint32(ip), nil
+	//buf := make([]byte, 8)
+	//return binary.BigEndian.PutUint32(buf, v), nil
+	//return binary.BigEndian.Uint32(ip[12:16]), nil
+//}
+
+// uint32ip converts an uint32 representation of a string into an IP
+func uint32ip(nn uint32) string {
+	ip := make(net.IP, 4)
+	binary.BigEndian.PutUint32(ip, nn)
+	return ip.String()
+}
+
