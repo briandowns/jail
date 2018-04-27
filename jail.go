@@ -51,9 +51,9 @@ type jail struct {
 	IP6      uintptr
 }
 
-// JailOpts hlds the options to be passed in to
+// Opts hlds the options to be passed in to
 // create the new jail
-type JailOpts struct {
+type Opts struct {
 	Version  int
 	Path     string
 	Name     string
@@ -71,30 +71,30 @@ type inAddr struct {
 }
 
 // validate makes sure the required fields are present
-func (j *JailOpts) validate() error {
-	if j.Path == "" {
+func (o *Opts) validate() error {
+	if o.Path == "" {
 		return errors.New("missing path")
 	}
-	if j.Name == "" {
+	if o.Name == "" {
 		return errors.New("missing name")
 	}
 	return nil
 }
 
 // Jail takes the given parameters, validates, and creates a new jail
-func Jail(jo *JailOpts) (int, error) {
-	if err := jo.validate(); err != nil {
+func Jail(o *Opts) (int, error) {
+	if err := oo.validate(); err != nil {
 		return 0, err
 	}
-	jn, err := syscall.BytePtrFromString(jo.Name)
+	jn, err := syscall.BytePtrFromString(o.Name)
 	if err != nil {
 		return 0, err
 	}
-	jp, err := syscall.BytePtrFromString(jo.Path)
+	jp, err := syscall.BytePtrFromString(o.Path)
 	if err != nil {
 		return 0, err
 	}
-	hn, err := syscall.BytePtrFromString(jo.Name)
+	hn, err := syscall.BytePtrFromString(o.Name)
 	if err != nil {
 		return 0, err
 	}
