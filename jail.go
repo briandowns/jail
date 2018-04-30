@@ -1,4 +1,4 @@
-// build +FreeBSD +amd64
+// build +FreeBSD
 
 // Package jail provides the ability to lock a process
 // or Goroutine into a FreeBSD jail
@@ -68,7 +68,7 @@ type jail struct {
 	IP6      uintptr
 }
 
-// Opts hlds the options to be passed in to
+// Opts holds the options to be passed in to
 // create the new jail
 type Opts struct {
 	Version  int
@@ -170,12 +170,23 @@ func (j *jail) Clone() (int, error) {
 	return int(r1), nil
 }
 
+// validParams contains a list of the valid parameters that
+// are allowed to be used when calling the Set or Get functions
+// TODO(briandowns) add more as they are identified
+var validParams = []string{
+	"jid",
+	"name",
+	"dying",
+	"persist",
+	"nopersist",
+}
+
 // Params contains the individual settings passed in to either get
 // or set a jail
 type Params map[string]interface{}
 
 // NewParams creates a new value of type Params by
-// initializing the underluing map
+// initializing the underlying map
 func NewParams() Params {
 	return make(map[string]interface{})
 }
