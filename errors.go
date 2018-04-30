@@ -74,16 +74,16 @@ const (
 	// ErrJailGetFaultOutsideOfAllocatedSpace [EFAULT] Iov, or	one of the addresses contained within it, points to an address outside the allocated address space of the process.
 	ErrJailGetFaultOutsideOfAllocatedSpace = efault
 
-	// ErrJailGetNotExist [ENOENT] The jail referred to by	a jid or name parameter	does not exist.
+	// ErrJailGetNotExist [ENOENT] The jail referred to by jid or name parameter does not exist.
 	ErrJailGetNotExist = enoent
 
-	// ErrJailGetNotAccessibleProcInDiffJail [ENOENT] The jail referred to by	a jid is not accessible	by the process, because the process is in a different jail.
+	// ErrJailGetNotAccessibleProcInDiffJail [ENOENT] The jail referred to by a jid is not accessible by the process, because the process is in a different jail.
 	ErrJailGetNotAccessibleProcInDiffJail = enoent
 
 	// [ENOENT] The lastjid parameter is greater than the highest current jail ID.
 	ErrJailGetParamHigherThanCurJID = enoent
 
-	// ErrJailGetParamWrongSize [EINVAL] A supplied parameter is	the wrong size.
+	// ErrJailGetParamWrongSize [EINVAL] A supplied parameter is the wrong size.
 	ErrJailGetParamWrongSize = einval
 
 	// ErrJailGetUnknownParam [EINVAL] A supplied parameter name does not match any known parameters.

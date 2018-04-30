@@ -53,7 +53,8 @@ const jailAPIVersion uint32 = 2
 // for the system
 const MaxChildJails int64 = 999999
 
-// jail ...
+// jail contains the data that will be passed into
+// the jail(2) syscall
 type jail struct {
 	Version  uint32
 	Path     uintptr
@@ -132,6 +133,16 @@ func Jail(o *Opts) (int, error) {
 	}
 	r1, _, e1 := syscall.Syscall(sysJail, uintptr(unsafe.Pointer(j)), 0, 0)
 	if e1 != 0 {
+		switch int(e1) {
+		case ErrJailPermDenied:
+			return 0, fmt.Errorf("unprivileged user: %d", e1)
+		case ErrJailFaultOutsideOfAllocatedSpace:
+			return 0, fmt.Errorf("fault outside of allocation space: %d", e1)
+		case ErrJailInvalidVersion:
+			return 0, fmt.Errorf("invalid version: %d", e1)
+		case ErrjailNoFreeJIDFound:
+			return 0, fmt.Errorf("no free JID found: %d", e1)
+		}
 		return 0, fmt.Errorf("%d", e1)
 	}
 	if o.Chdir {
@@ -176,7 +187,7 @@ func (p Params) Add(k string, v interface{}) error {
 		p[k] = v
 		return nil
 	}
-	return fmt.Errorf("key of %s already set with value of %v", k, p[k])
+	return fmt.Errorf("key of %q already set with value of %v", k, p[k])
 }
 
 // Validate is used to make sure that the params assigned
@@ -239,7 +250,32 @@ func Get(params Params, flags uintptr) error {
 func getSet(call int, iov []syscall.Iovec, flags uintptr) error {
 	_, _, e1 := syscall.Syscall(uintptr(call), uintptr(unsafe.Pointer(&iov)), 0, flags)
 	if e1 != 0 {
-		return fmt.Errorf("%d", e1)
+		switch call {
+		case sysJailGet:
+			switch int(e1) {
+			case ErrJailGetFaultOutsideOfAllocatedSpace:
+				return fmt.Errorf("fault outside of allocated space: %d", e1)
+			case enoent:
+				return fmt.Errorf("jail referred to either does not exist or is inaccessible: %d", e1)
+			case einval:
+				return fmt.Errorf("invalid param provided: %d", e1)
+			}
+		case sysJailSet:
+			switch int(e1) {
+			case eperm:
+				return fmt.Errorf("not allowed or restricted: %d", e1)
+			case ErrJailSetFaultOutsideOfAllocatedSpace:
+				return fmt.Errorf("fault outside of allocated space: %d", e1)
+			case ErrJailSetParamNotExist, ErrJailSetParamWrongSize:
+				return fmt.Errorf("invalid param provided: %d", e1)
+			case ErrJailSetUpdateFlagNotSet:
+				return fmt.Errorf("set update flag not set: %d", e1)
+			case ErrJailSetNameTooLong:
+				return fmt.Errorf("set name too long: %d", e1)
+			case ErrJailSetNoIDsLeft:
+				return fmt.Errorf("no JID's left: %d", e1)
+			}
+		}
 	}
 	return nil
 }
@@ -247,20 +283,27 @@ func getSet(call int, iov []syscall.Iovec, flags uintptr) error {
 // Attach receives a jail ID and attempts to attach the current
 // process to that jail
 func Attach(jailID int) error {
-	jid := uintptr(unsafe.Pointer(&jailID))
-	_, _, e1 := syscall.Syscall(sysJailAttach, jid, 0, 0)
-	if e1 != 0 {
-		return fmt.Errorf("%d", e1)
-	}
-	return nil
+	return attachRemove(sysJailAttach, jailID)
 }
 
 // Remove receives a jail ID and attempts to remove the associated jail
 func Remove(jailID int) error {
+	return attachRemove(sysJailRemove, jailID)
+}
+
+// attachRemove
+func attachRemove(call, jailID int) error {
 	jid := uintptr(unsafe.Pointer(&jailID))
-	_, _, e1 := syscall.Syscall(sysJailRemove, jid, 0, 0)
+	_, _, e1 := syscall.Syscall(uintptr(call), jid, 0, 0)
 	if e1 != 0 {
-		return fmt.Errorf("%d", e1)
+		if e1 != 0 {
+			switch int(e1) {
+			case ErrJailAttachUnprivilegedUser:
+				return fmt.Errorf("unprivileged user: %d", e1)
+			case ErrjailAttachJIDNotExist:
+				return fmt.Errorf("JID does not exist: %d", e1)
+			}
+		}
 	}
 	return nil
 }
