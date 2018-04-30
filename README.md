@@ -1,5 +1,7 @@
 <p align="center">
   <a href="jail"><img src="https://www.debarbora.com/wp-content/uploads/2017/05/freebsd_jail.png" width="200" height="200" border="0" alt="jail"></a>
+</p>
+<p align="center">
   <a href="https://godoc.org/github.com/briandowns/jail"><img src="https://godoc.org/github.com/briandowns/jail?status.svg" alt="GoDoc"></a>
   <a href="https://opensource.org/licenses/BSD-3-Clause"><img src="https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?" alt="License"></a>
   <a href="https://github.com/briandowns/jail/releases"><img src="https://img.shields.io/badge/version-0.1.0-green.svg?" alt="Version"></a>
