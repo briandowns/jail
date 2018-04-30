@@ -7,10 +7,6 @@
   <a href="https://github.com/briandowns/jail/releases"><img src="https://img.shields.io/badge/version-0.1.0-green.svg?" alt="Version"></a>
 </p>
 
-<p align="center">
-  
-</p>
-
 # Jail
 
 Jail provides native FreeBSD Jail syscalls in Go.  As of now, FreeBSD 11.1 defines the Jail API at version 2.  This is the only version supported at this time.  The syscalls supported are:

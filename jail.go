@@ -24,17 +24,18 @@ const (
 )
 
 const (
-	// CreateFlag Create a new jail. If a jid or name parameters exists, they must
-	// not refer to an existing jail.
+	// CreateFlag Create a new jail. If a jid or name parameters exists, they
+	// must not refer to an existing jail.
 	CreateFlag = uintptr(0x01)
 
 	// UpdateFlag Modify an existing jail. One of the jid or name parameters must
 	// exist, and must refer to an existing jail. If both JAIL_CREATE and JAIL_UPDATE
-	// are set, a jail will be created if it does not yet exist, and modified if it does exist.
+	// are set, a jail will be created if it does not yet exist, and modified if
+	// it does exist.
 	UpdateFlag = uintptr(0x02)
 
-	// AttachFlag In addition to creating or modifying the jail, attach the current process
-	// to it, as with the jail_attach() system call.
+	// AttachFlag In addition to creating or modifying the jail, attach the current
+	// process to it, as with the jail_attach() system call.
 	AttachFlag = uintptr(0x04)
 
 	// DyingFlag Allow setting a jail that is in the process of being removed.
@@ -47,6 +48,7 @@ const (
 	GetMaskFlag = uintptr(0x08)
 )
 
+// jailAPIVersion is the current jail API version
 const jailAPIVersion uint32 = 2
 
 // MaxChildJails is the maximum number of jails
@@ -213,7 +215,8 @@ func (p Params) buildIovec() ([]syscall.Iovec, error) {
 		case reflect.String:
 			s := string(rv.String())
 			size = uint64(unsafe.Sizeof(s))
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		case reflect.Int, reflect.Int8, reflect.Int16,
+			reflect.Int32, reflect.Int64, reflect.Bool:
 			size = uint64(unsafe.Sizeof(rv.UnsafeAddr()))
 		default:
 			return nil, errors.New("invalid value passed in for key: " + k)
