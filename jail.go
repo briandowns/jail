@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"reflect"
 	"syscall"
 	"unsafe"
 )
@@ -158,12 +159,12 @@ func (j *jail) Clone() (int, error) {
 
 // Params contains the individual settings passed in to either get
 // or set a jail
-type Params map[string]int64
+type Params map[string]interface{}
 
 // NewParams creates a new value of type Params by
 // initializing the underluing map
 func NewParams() Params {
-	return make(map[string]int64)
+	return make(map[string]interface{})
 }
 
 // Add adds the given key and value to the params map
@@ -178,29 +179,65 @@ func (p Params) Add(k string, v interface{}) error {
 	return fmt.Errorf("key of %s already set with value of %v", k, p[k])
 }
 
+// Validate is used to make sure that the params assigned
+// are indeed correct and usable. This has been exposed for
+// a caller to do validation as well as the package interally
+func (p Params) Validate() error {
+	return nil
+}
+
+// buildIOVEC takes the containing map value and builds
+// out a slice of syscall.Iovec
+func (p Params) buildIovec() ([]syscall.Iovec, error) {
+	iovec := make([]syscall.Iovec, len(p))
+	var itr int
+	for k, v := range p {
+		ib, err := syscall.BytePtrFromString(k)
+		if err != nil {
+			return nil, err
+		}
+		rv := reflect.ValueOf(v).Elem()
+		var size uint64
+		switch rv.Kind() {
+		case reflect.String:
+			s := string(rv.String())
+			size = uint64(unsafe.Sizeof(s))
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			size = uint64(unsafe.Sizeof(rv.UnsafeAddr()))
+		default:
+			return nil, errors.New("invalid value passed in for key: " + k)
+		}
+		iovec[itr] = syscall.Iovec{
+			Base: ib,
+			Len:  size,
+		}
+		itr++
+	}
+	return iovec, nil
+}
+
 // Set creates	a new jail, or modifies	an existing
 // one, and optionally locks the current process in it
 func Set(params Params, flags uintptr) error {
-	iovec := make([]syscall.Iovec, len(params))
-	var itr int
-	for k, v := range params {
-		x := k
-		iovec[itr] = syscall.Iovec{
-			Base: x,
-			Len:  unsafe.Sizeof(v),
-		}
+	iov, err := params.buildIovec()
+	if err != nil {
+		return err
 	}
-	_, _, e1 := syscall.Syscall(sysJailSet, uintptr(unsafe.Pointer(&iovec)), 0, flags)
-	if e1 != 0 {
-		return fmt.Errorf("%d", e1)
-	}
-	return nil
+	return getSet(sysJailSet, iov, flags)
 }
 
 // Get retrieves a matching jail based on the provided params
 func Get(params Params, flags uintptr) error {
-	iovec := make([]syscall.Iovec, len(params))
-	_, _, e1 := syscall.Syscall(sysJailGet, iovec, 0, flags)
+	iov, err := params.buildIovec()
+	if err != nil {
+		return err
+	}
+	return getSet(sysJailGet, iov, flags)
+}
+
+// getSet performas the given syscall with the params and flags provided
+func getSet(call int, iov []syscall.Iovec, flags uintptr) error {
+	_, _, e1 := syscall.Syscall(uintptr(call), uintptr(unsafe.Pointer(&iov)), 0, flags)
 	if e1 != 0 {
 		return fmt.Errorf("%d", e1)
 	}
@@ -226,12 +263,6 @@ func Remove(jailID int) error {
 		return fmt.Errorf("%d", e1)
 	}
 	return nil
-}
-
-func tester() uint32 {
-	buf := make([]byte, 4)
-	binary.BigEndian.PutUint32(buf, uint32(3232235720))
-	return binary.BigEndian.Uint32(buf)
 }
 
 // ipToUint32 converts a string representation of an IP address

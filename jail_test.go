@@ -2,6 +2,7 @@ package jail
 
 import (
 	"reflect"
+	"syscall"
 	"testing"
 )
 
@@ -115,6 +116,116 @@ func TestRemove(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := Remove(tt.args.jailID); (err != nil) != tt.wantErr {
 				t.Errorf("Remove() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestSet(t *testing.T) {
+	type args struct {
+		params Params
+		flags  uintptr
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := Set(tt.args.params, tt.args.flags); (err != nil) != tt.wantErr {
+				t.Errorf("Set() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestGet(t *testing.T) {
+	type args struct {
+		params Params
+		flags  uintptr
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := Get(tt.args.params, tt.args.flags); (err != nil) != tt.wantErr {
+				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_getSet(t *testing.T) {
+	type args struct {
+		call  int
+		iov   []syscall.Iovec
+		flags uintptr
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := getSet(tt.args.call, tt.args.iov, tt.args.flags); (err != nil) != tt.wantErr {
+				t.Errorf("getSet() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_uint32ip(t *testing.T) {
+	type args struct {
+		nn uint32
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := uint32ip(tt.args.nn); got != tt.want {
+				t.Errorf("uint32ip() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_ipToUint32(t *testing.T) {
+	type args struct {
+		sip string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    uint32
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ipToUint32(tt.args.sip)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ipToUint32() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("ipToUint32() = %v, want %v", got, tt.want)
 			}
 		})
 	}
