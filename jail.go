@@ -1,4 +1,4 @@
-// build +FreeBSD
+// build +FreeBSD +amd64
 
 // Package jail provides the ability to lock a process
 // or Goroutine into a FreeBSD jail
@@ -48,6 +48,11 @@ const (
 
 const jailAPIVersion uint32 = 2
 
+// MaxChildJails is the maximum number of jails
+// for the system
+const MaxChildJails int64 = 999999
+
+// jail ...
 type jail struct {
 	Version  uint32
 	Path     uintptr
@@ -106,31 +111,15 @@ func Jail(o *Opts) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	/*var uint32ip uint32
-	if jo.IP4 != "" {
-		uip, err := ipToUint32(jo.IP4)
+	var uint32ip uint32
+	if o.IP4 != "" {
+		uip, err := ipToUint32(o.IP4)
 		if err != nil {
 			return 0, err
 		}
 		uint32ip = uip
-	}*/
-	//t := tester()
-	//t := uint32(3232235720)
-	/*x := ((t>>24)&0xff)    |
-	             ((t<<8)&0xff0000) |
-	             ((t>>8)&0xff00)   |
-	             ((t<<24)&0xff000000)
-
-		iat := inAddrT(x)*/
-	oip := net.ParseIP("192.168.0.200")
-	nip := oip.To4()
-	//x1 := binary.LittleEndian.Uint32(nip)
-	//x1 := uint32(uint(nip[0]) | uint(nip[1])<<8 | uint(nip[2])<<16 | uint(nip[3])<<32)
-	x1 := uint32(uint(nip[3]) | uint(nip[2])<<8 | uint(nip[1])<<16 | uint(nip[0])<<32)
-	ia := &inAddr{sAddr: x1}
-
-	fmt.Printf("%+v\n", ia)
-
+	}
+	ia := &inAddr{sAddr: inAddrT(uint32ip)}
 	j := &jail{
 		Version:  uint32(0),
 		Path:     uintptr(unsafe.Pointer(jp)),
@@ -169,12 +158,12 @@ func (j *jail) Clone() (int, error) {
 
 // Params contains the individual settings passed in to either get
 // or set a jail
-type Params map[string]interface{}
+type Params map[string]int64
 
 // NewParams creates a new value of type Params by
 // initializing the underluing map
 func NewParams() Params {
-	return make(map[string]interface{})
+	return make(map[string]int64)
 }
 
 // Add adds the given key and value to the params map
@@ -189,19 +178,28 @@ func (p Params) Add(k string, v interface{}) error {
 	return fmt.Errorf("key of %s already set with value of %v", k, p[k])
 }
 
-// Set
+// Set creates	a new jail, or modifies	an existing
+// one, and optionally locks the current process in it
 func Set(params Params, flags uintptr) error {
-	iovec := uintptr(unsafe.Pointer(params))
-	_, _, e1 := syscall.Syscall(sysJailSet, iovec, 0, flags)
+	iovec := make([]syscall.Iovec, len(params))
+	var itr int
+	for k, v := range params {
+		x := k
+		iovec[itr] = syscall.Iovec{
+			Base: x,
+			Len:  unsafe.Sizeof(v),
+		}
+	}
+	_, _, e1 := syscall.Syscall(sysJailSet, uintptr(unsafe.Pointer(&iovec)), 0, flags)
 	if e1 != 0 {
 		return fmt.Errorf("%d", e1)
 	}
 	return nil
 }
 
-// Get
+// Get retrieves a matching jail based on the provided params
 func Get(params Params, flags uintptr) error {
-	iovec := uintptr(unsafe.Pointer(params))
+	iovec := make([]syscall.Iovec, len(params))
 	_, _, e1 := syscall.Syscall(sysJailGet, iovec, 0, flags)
 	if e1 != 0 {
 		return fmt.Errorf("%d", e1)
@@ -236,27 +234,19 @@ func tester() uint32 {
 	return binary.BigEndian.Uint32(buf)
 }
 
-// ipToUint32 converts a string representation of an IP address into
-// an uint32
-//func ipToUint32(sip string) (uint32, error) {
-/*var ip net.IP
+// ipToUint32 converts a string representation of an IP address
+// into an uint32
+func ipToUint32(sip string) (uint32, error) {
+	var ip net.IP
 	ip, _, err := net.ParseCIDR(sip)
 	if err != nil {
 		return 0, err
 	}
-        fmt.Println(ip.String())*/
-// convert string to net.IP
-/*if len(ip) == 16 {
-	return binary.BigEndian.Uint32(ip[12:16]), nil
-}*/
-//ip := net.ParseIP(sip)
-//fmt.Println(len(ip))
-//fmt.Println(ip.String())
-//return binary.LittleEndian.Uint32(ip), nil
-//buf := make([]byte, 8)
-//return binary.BigEndian.PutUint32(buf, v), nil
-//return binary.BigEndian.Uint32(ip[12:16]), nil
-//}
+	if len(ip) == 16 {
+		return binary.BigEndian.Uint32(ip[12:16]), nil
+	}
+	return binary.LittleEndian.Uint32(ip), nil
+}
 
 // uint32ip converts an uint32 representation of a string into an IP
 func uint32ip(nn uint32) string {
