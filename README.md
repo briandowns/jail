@@ -21,6 +21,8 @@ Jail provides native FreeBSD Jail syscalls in Go.  As of now, FreeBSD 11.1 defin
 * jail_attach(2)
 * jail_remove(2)
 
+To get specifics on the syscalls themselves can be referenced [here](https://www.freebsd.org/cgi/man.cgi?query=jail_set&apropos=0&sektion=2&manpath=FreeBSD+11.1-RELEASE&arch=default&format=html).
+
 For examples, please reference the `examples` directory.
 
 ## Contributing
