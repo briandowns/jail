@@ -29,6 +29,10 @@ const (
 
 	// ErrjailNoFreeJIDFound [EAGAIN] No free JID could be found.
 	ErrjailNoFreeJIDFound = eagain
+
+        // ErrJailNoSuchFileDirectory [ENOENT] No such file or directory.  A component of a specified pathname
+        // did not exist, or the pathname was   an empty string.
+        ErrJailNoSuchFileDirectory = enoent
 )
 
 // The jail_set() system call will fail with one of the below errors
