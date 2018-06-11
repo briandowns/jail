@@ -144,6 +144,8 @@ func Jail(o *Opts) (int, error) {
 			return 0, fmt.Errorf("invalid version: %d", e1)
 		case ErrjailNoFreeJIDFound:
 			return 0, fmt.Errorf("no free JID found: %d", e1)
+                case ErrJailNoSuchFileDirectory:
+                        return 0, fmt.Errorf("No such file or directory: %s\n", o.Path)
 		}
 		return 0, fmt.Errorf("%d", e1)
 	}
