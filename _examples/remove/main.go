@@ -17,8 +17,8 @@ func main() {
 		IP4:      "192.168.0.200",
 		Chdir:    true,
 	}
-	var j int
-	go func(jid *int) {
+	var j int32
+	go func(jid *int32) {
 		jailID, err := jail.Jail(o)
 		if err != nil {
 			fmt.Println(err)
