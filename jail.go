@@ -312,9 +312,9 @@ func attachRemove(call, jailID int32) error {
 		if e1 != 0 {
 			switch int(e1) {
 			case ErrJailAttachUnprivilegedUser:
-				return fmt.Errorf("unprivileged user: %d", e1)
+				return fmt.Errorf("unprivileged user")
 			case ErrjailAttachJIDNotExist:
-				return fmt.Errorf("JID does not exist: %d", e1)
+				return fmt.Errorf("JID does not exist")
 			}
 		}
 	}
