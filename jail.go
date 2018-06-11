@@ -99,7 +99,7 @@ func (o *Opts) validate() error {
 }
 
 // Jail takes the given parameters, validates, and creates a new jail
-func Jail(o *Opts) (int, error) {
+func Jail(o *Opts) (int32, error) {
 	if err := o.validate(); err != nil {
 		return 0, err
 	}
@@ -151,7 +151,7 @@ func Jail(o *Opts) (int, error) {
 			return 0, err
 		}
 	}
-	return int(r1), nil
+	return int32(r1), nil
 }
 
 // Clone creates a new version of the previously created jail
@@ -295,17 +295,17 @@ func getSet(call int, iov []syscall.Iovec, flags uintptr) error {
 
 // Attach receives a jail ID and attempts to attach the current
 // process to that jail
-func Attach(jailID int) error {
+func Attach(jailID int32) error {
 	return attachRemove(sysJailAttach, jailID)
 }
 
 // Remove receives a jail ID and attempts to remove the associated jail
-func Remove(jailID int) error {
+func Remove(jailID int32) error {
 	return attachRemove(sysJailRemove, jailID)
 }
 
 // attachRemove
-func attachRemove(call, jailID int) error {
+func attachRemove(call, jailID int32) error {
 	jid := uintptr(unsafe.Pointer(&jailID))
 	_, _, e1 := syscall.Syscall(uintptr(call), jid, 0, 0)
 	if e1 != 0 {
