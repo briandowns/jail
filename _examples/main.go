@@ -10,10 +10,10 @@ import (
 
 func main() {
 	o := &jail.Opts{
-		Path:     "/zroot/jails/build",
+		Path:     "/zroot/jails/build", //Make sure this directory exists
 		Name:     "jailname",
 		Hostname: "hostname",
-		IP4:      "192.168.0.200",
+		IP4:      "192.168.0.200/24",
 		Chdir:    true,
 	}
 	jid, err := jail.Jail(o)
