@@ -115,21 +115,20 @@ func Jail(o *Opts) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	var uint32ip uint32
-	if o.IP4 != "" {
-		uint32ip = ip2int(net.ParseIP(o.IP4))
-	}
-	ia := &inAddr{
-		sAddr: inAddrT(uint32ip),
-	}
 	j := &jail{
 		Version:  uint32(2),
 		Path:     uintptr(unsafe.Pointer(jp)),
 		Hostname: uintptr(unsafe.Pointer(hn)),
 		Name:     uintptr(unsafe.Pointer(jn)),
-		IP4s:     uint32(1),
-		IP6s:     uint32(0),
-		IP4:      uintptr(unsafe.Pointer(ia)),
+	}
+	if o.IP4 != "" {
+		uint32ip := ip2int(net.ParseIP(o.IP4))
+		ia := &inAddr{
+			sAddr: inAddrT(uint32ip),
+		}
+		j.IP4s = 1
+		j.IP6s = uint32(0)
+		j.IP4 = uintptr(unsafe.Pointer(ia))
 	}
 	r1, _, e1 := syscall.Syscall(sysJail, uintptr(unsafe.Pointer(j)), 0, 0)
 	if e1 != 0 {
