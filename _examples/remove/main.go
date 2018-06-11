@@ -27,6 +27,7 @@ func main() {
 		*jid = jailID
 		time.Sleep(30 * time.Second)
 	}(&j)
+	time.Sleep(5 * time.Second)
 	fmt.Printf("removing JID: %d\n", j)
 	if err := jail.Remove(j); err != nil {
 		fmt.Println(err)
