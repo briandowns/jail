@@ -204,29 +204,3 @@ func Test_uint32ip(t *testing.T) {
 		})
 	}
 }
-
-func Test_ipToUint32(t *testing.T) {
-	type args struct {
-		sip string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    uint32
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := ipToUint32(tt.args.sip)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ipToUint32() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("ipToUint32() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}

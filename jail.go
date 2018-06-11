@@ -117,15 +117,13 @@ func Jail(o *Opts) (int, error) {
 	}
 	var uint32ip uint32
 	if o.IP4 != "" {
-		uip, err := ipToUint32(o.IP4)
-		if err != nil {
-			return 0, err
-		}
-		uint32ip = uip
+		uint32ip = ip2int(net.ParseIP(o.IP4))
 	}
-	ia := &inAddr{sAddr: inAddrT(uint32ip)}
+	ia := &inAddr{
+		sAddr: inAddrT(uint32ip),
+	}
 	j := &jail{
-		Version:  uint32(0),
+		Version:  uint32(2),
 		Path:     uintptr(unsafe.Pointer(jp)),
 		Hostname: uintptr(unsafe.Pointer(hn)),
 		Name:     uintptr(unsafe.Pointer(jn)),
@@ -144,8 +142,8 @@ func Jail(o *Opts) (int, error) {
 			return 0, fmt.Errorf("invalid version: %d", e1)
 		case ErrjailNoFreeJIDFound:
 			return 0, fmt.Errorf("no free JID found: %d", e1)
-                case ErrJailNoSuchFileDirectory:
-                        return 0, fmt.Errorf("No such file or directory: %s\n", o.Path)
+		case ErrJailNoSuchFileDirectory:
+			return 0, fmt.Errorf("No such file or directory: %s\n", o.Path)
 		}
 		return 0, fmt.Errorf("%d", e1)
 	}
@@ -324,18 +322,12 @@ func attachRemove(call, jailID int) error {
 	return nil
 }
 
-// ipToUint32 converts a string representation of an IP address
-// into an uint32
-func ipToUint32(sip string) (uint32, error) {
-	var ip net.IP
-	ip, _, err := net.ParseCIDR(sip)
-	if err != nil {
-		return 0, err
-	}
+// ip2int converts the given IP address to an uint32
+func ip2int(ip net.IP) uint32 {
 	if len(ip) == 16 {
-		return binary.BigEndian.Uint32(ip[12:16]), nil
+		return binary.LittleEndian.Uint32(ip[12:16])
 	}
-	return binary.LittleEndian.Uint32(ip), nil
+	return binary.LittleEndian.Uint32(ip)
 }
 
 // uint32ip converts an uint32 representation of a string into an IP
