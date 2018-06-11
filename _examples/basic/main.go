@@ -11,7 +11,8 @@ import (
 
 func main() {
 	o := &jail.Opts{
-		Path:     "/zroot/jails/build", //Make sure this directory exists
+		Version:  uint32(2),
+		Path:     "/zroot/jails/build",
 		Name:     "jailname",
 		Hostname: "hostname",
 		IP4:      "192.168.0.200",

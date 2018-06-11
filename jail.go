@@ -71,7 +71,7 @@ type jail struct {
 // Opts holds the options to be passed in to
 // create the new jail
 type Opts struct {
-	Version  int
+	Version  uint32
 	Path     string
 	Name     string
 	Hostname string
@@ -116,7 +116,7 @@ func Jail(o *Opts) (int, error) {
 		return 0, err
 	}
 	j := &jail{
-		Version:  uint32(2),
+		Version:  o.Version,
 		Path:     uintptr(unsafe.Pointer(jp)),
 		Hostname: uintptr(unsafe.Pointer(hn)),
 		Name:     uintptr(unsafe.Pointer(jn)),
