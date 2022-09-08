@@ -199,7 +199,7 @@ func (j *jail) Clone() (int, error) {
 }
 
 // ID returns the JID of the corresponding jail.
-func ID(name string) (int, error) {
+func ID(name string) (int32, error) {
 	params := NewParams()
 	params.Add("name", name)
 
@@ -207,11 +207,11 @@ func ID(name string) (int, error) {
 		return -1, err
 	}
 
-	return params["jid"].(int), nil
+	return params["jid"].(int32), nil
 }
 
 // Name returns the name of the corresponding jail.
-func Name(id int) (string, error) {
+func Name(id int32) (string, error) {
 	params := NewParams()
 	params.Add("jid", id)
 
@@ -279,7 +279,7 @@ func (p Params) Validate() error {
 	return nil
 }
 
-// buildIOVEC takes the containing map value and builds
+// buildIovec takes the containing map value and builds
 // out a slice of syscall.Iovec.
 func (p Params) buildIovec() ([]syscall.Iovec, error) {
 	iovec := make([]syscall.Iovec, len(p))
@@ -290,8 +290,10 @@ func (p Params) buildIovec() ([]syscall.Iovec, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		rv := reflect.ValueOf(v).Elem()
 		var size uint64
+
 		switch rv.Kind() {
 		case reflect.String:
 			s := string(rv.String())
@@ -307,6 +309,7 @@ func (p Params) buildIovec() ([]syscall.Iovec, error) {
 			Base: ib,
 			Len:  size,
 		}
+
 		itr++
 	}
 
