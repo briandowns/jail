@@ -23,13 +23,18 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
 	fmt.Printf("JID: %d - / director listing in jail", jid)
+
+	// here so a `jls` can be ran seperately to see that the jail is running
 	time.Sleep(30 * time.Second)
+
 	files, err := ioutil.ReadDir(".")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
 	for _, f := range files {
 		fmt.Println(f.Name())
 	}

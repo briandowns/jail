@@ -9,7 +9,7 @@
 
 # Jail
 
-Jail provides native FreeBSD Jail syscalls in Go.  As of now, FreeBSD 11.1 defines the Jail API at version 2.  This is the only version supported at this time.  The syscalls supported are:
+Jail provides native FreeBSD Jail syscalls in Go.  As of now, FreeBSD 13.1 defines the Jail API at version 2.  This is the only version supported at this time.  The syscalls supported are:
 
 * jail(2)
 * jail_set(2)

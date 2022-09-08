@@ -8,7 +8,7 @@ import (
 
 func TestOpts_validate(t *testing.T) {
 	type fields struct {
-		Version  int
+		Version  uint32
 		Path     string
 		Name     string
 		Hostname string
@@ -46,7 +46,7 @@ func TestJail(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    int
+		want    int32
 		wantErr bool
 	}{
 		// TODO: Add test cases.
@@ -83,7 +83,7 @@ func TestNewParams(t *testing.T) {
 
 func TestAttach(t *testing.T) {
 	type args struct {
-		jailID int
+		jailID int32
 	}
 	tests := []struct {
 		name    string
@@ -103,7 +103,7 @@ func TestAttach(t *testing.T) {
 
 func TestRemove(t *testing.T) {
 	type args struct {
-		jailID int
+		jailID int32
 	}
 	tests := []struct {
 		name    string

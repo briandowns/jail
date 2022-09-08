@@ -30,9 +30,9 @@ const (
 	// ErrjailNoFreeJIDFound [EAGAIN] No free JID could be found.
 	ErrjailNoFreeJIDFound = eagain
 
-        // ErrJailNoSuchFileDirectory [ENOENT] No such file or directory.  A component of a specified pathname
-        // did not exist, or the pathname was   an empty string.
-        ErrJailNoSuchFileDirectory = enoent
+	// ErrJailNoSuchFileDirectory [ENOENT] No such file or directory.  A component of a specified pathname
+	// did not exist, or the pathname was   an empty string.
+	ErrJailNoSuchFileDirectory = enoent
 )
 
 // The jail_set() system call will fail with one of the below errors
@@ -126,3 +126,5 @@ var (
 	// ErrjailAttachJIDNotExist [EINVAL] The jail specified by jid does not exist.
 	ErrjailAttachJIDNotExist = einval
 )
+
+const ErrMsgLen = 1024

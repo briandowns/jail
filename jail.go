@@ -1,7 +1,7 @@
 // build +FreeBSD
 
 // Package jail provides the ability to lock a process
-// or Goroutine into a FreeBSD jail
+// or Goroutine into a FreeBSD jail.
 package jail
 
 import (
@@ -14,6 +14,8 @@ import (
 	"syscall"
 	"unsafe"
 )
+
+const EtcdConfigFile = "/etc/jail.conf"
 
 const (
 	sysJail       = 338
@@ -48,15 +50,15 @@ const (
 	GetMaskFlag = uintptr(0x08)
 )
 
-// jailAPIVersion is the current jail API version
+// jailAPIVersion is the current jail API version.
 const jailAPIVersion uint32 = 2
 
 // MaxChildJails is the maximum number of jails
-// for the system
+// for the system.
 const MaxChildJails int64 = 999999
 
 // jail contains the data that will be passed into
-// the jail(2) syscall
+// the jail(2) syscall.
 type jail struct {
 	Version  uint32
 	Path     uintptr
@@ -69,7 +71,7 @@ type jail struct {
 }
 
 // Opts holds the options to be passed in to
-// create the new jail
+// create the new jail.
 type Opts struct {
 	Version  uint32
 	Path     string
@@ -77,6 +79,24 @@ type Opts struct {
 	Hostname string
 	IP4      string
 	Chdir    bool
+}
+
+const (
+	JailRawValue    = 0x01
+	JailBool        = 0x02
+	JailParamNoBool = 0x04
+	JailParamSys    = 0x80
+)
+
+// JailParam
+type JailParam struct {
+	Name       string
+	Value      interface{}
+	ValueLen   int
+	ElemLen    int
+	CtlType    int
+	StructType int
+	Flags      int
 }
 
 // typedef uint32_t in_addr_t
@@ -95,26 +115,31 @@ func (o *Opts) validate() error {
 	if o.Name == "" {
 		return errors.New("missing name")
 	}
+
 	return nil
 }
 
-// Jail takes the given parameters, validates, and creates a new jail
+// Jail takes the given parameters, validates, and creates a new jail.
 func Jail(o *Opts) (int32, error) {
 	if err := o.validate(); err != nil {
 		return 0, err
 	}
+
 	jn, err := syscall.BytePtrFromString(o.Name)
 	if err != nil {
 		return 0, err
 	}
+
 	jp, err := syscall.BytePtrFromString(o.Path)
 	if err != nil {
 		return 0, err
 	}
+
 	hn, err := syscall.BytePtrFromString(o.Name)
 	if err != nil {
 		return 0, err
 	}
+
 	j := &jail{
 		Version:  o.Version,
 		Path:     uintptr(unsafe.Pointer(jp)),
@@ -130,6 +155,7 @@ func Jail(o *Opts) (int32, error) {
 		j.IP6s = uint32(0)
 		j.IP4 = uintptr(unsafe.Pointer(ia))
 	}
+
 	r1, _, e1 := syscall.Syscall(sysJail, uintptr(unsafe.Pointer(j)), 0, 0)
 	if e1 != 0 {
 		switch int(e1) {
@@ -146,15 +172,17 @@ func Jail(o *Opts) (int32, error) {
 		}
 		return 0, fmt.Errorf("%d", e1)
 	}
+
 	if o.Chdir {
 		if err := os.Chdir("/"); err != nil {
 			return 0, err
 		}
 	}
+
 	return int32(r1), nil
 }
 
-// Clone creates a new version of the previously created jail
+// Clone creates a new version of the previously created jail.
 func (j *jail) Clone() (int, error) {
 	nj := &jail{
 		Version:  j.Version,
@@ -166,12 +194,37 @@ func (j *jail) Clone() (int, error) {
 	if e1 != 0 {
 		return 0, fmt.Errorf("%d", e1)
 	}
+
 	return int(r1), nil
 }
 
+// ID returns the JID of the corresponding jail.
+func ID(name string) (int, error) {
+	params := NewParams()
+	params.Add("name", name)
+
+	if err := Get(params, 0); err != nil {
+		return -1, err
+	}
+
+	return params["jid"].(int), nil
+}
+
+// Name returns the name of the corresponding jail.
+func Name(id int) (string, error) {
+	params := NewParams()
+	params.Add("jid", id)
+
+	if err := Get(params, 0); err != nil {
+		return "", err
+	}
+
+	return params["name"].(string), nil
+}
+
 // validParams contains a list of the valid parameters that
-// are allowed to be used when calling the Set or Get functions
-// TODO(briandowns) add more as they are identified
+// are allowed to be used when calling the Set or Get functions.
+// TODO(briandowns) add more as they are identified.
 var validParams = []string{
 	"jid",
 	"name",
@@ -180,40 +233,58 @@ var validParams = []string{
 	"nopersist",
 }
 
+// isValidParam verifies that the given parameter is valid.
+func isValidParam(param string) bool {
+	for _, p := range validParams {
+		if param == p {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Params contains the individual settings passed in to either get
-// or set a jail
+// or set a jail.
 type Params map[string]interface{}
 
 // NewParams creates a new value of type Params by
-// initializing the underlying map
+// initializing the underlying map.
 func NewParams() Params {
 	return make(map[string]interface{})
 }
 
-// Add adds the given key and value to the params map
+// Add adds the given key and value to the params map.
 func (p Params) Add(k string, v interface{}) error {
 	if p == nil {
 		return errors.New("cannot assign values to nil map")
 	}
+
+	if !isValidParam(k) {
+		return errors.New("invalid parameter: " + k)
+	}
+
 	if _, ok := p[k]; !ok {
 		p[k] = v
 		return nil
 	}
+
 	return fmt.Errorf("key of %q already set with value of %v", k, p[k])
 }
 
 // Validate is used to make sure that the params assigned
 // are indeed correct and usable. This has been exposed for
-// a caller to do validation as well as the package interally
+// a caller to do validation as well as the package interally.
 func (p Params) Validate() error {
 	return nil
 }
 
 // buildIOVEC takes the containing map value and builds
-// out a slice of syscall.Iovec
+// out a slice of syscall.Iovec.
 func (p Params) buildIovec() ([]syscall.Iovec, error) {
 	iovec := make([]syscall.Iovec, len(p))
 	var itr int
+
 	for k, v := range p {
 		ib, err := syscall.BytePtrFromString(k)
 		if err != nil {
@@ -231,35 +302,39 @@ func (p Params) buildIovec() ([]syscall.Iovec, error) {
 		default:
 			return nil, errors.New("invalid value passed in for key: " + k)
 		}
+
 		iovec[itr] = syscall.Iovec{
 			Base: ib,
 			Len:  size,
 		}
 		itr++
 	}
+
 	return iovec, nil
 }
 
 // Set creates	a new jail, or modifies	an existing
-// one, and optionally locks the current process in it
+// one, and optionally locks the current process in it.
 func Set(params Params, flags uintptr) error {
 	iov, err := params.buildIovec()
 	if err != nil {
 		return err
 	}
+
 	return getSet(sysJailSet, iov, flags)
 }
 
-// Get retrieves a matching jail based on the provided params
+// Get retrieves a matching jail based on the provided params.
 func Get(params Params, flags uintptr) error {
 	iov, err := params.buildIovec()
 	if err != nil {
 		return err
 	}
+
 	return getSet(sysJailGet, iov, flags)
 }
 
-// getSet performas the given syscall with the params and flags provided
+// getSet performas the given syscall with the params and flags provided.
 func getSet(call int, iov []syscall.Iovec, flags uintptr) error {
 	_, _, e1 := syscall.Syscall(uintptr(call), uintptr(unsafe.Pointer(&iov)), 0, flags)
 	if e1 != 0 {
@@ -290,16 +365,17 @@ func getSet(call int, iov []syscall.Iovec, flags uintptr) error {
 			}
 		}
 	}
+
 	return nil
 }
 
 // Attach receives a jail ID and attempts to attach the current
-// process to that jail
+// process to that jail.
 func Attach(jailID int32) error {
 	return attachRemove(sysJailAttach, jailID)
 }
 
-// Remove receives a jail ID and attempts to remove the associated jail
+// Remove receives a jail ID and attempts to remove the associated jail.
 func Remove(jailID int32) error {
 	return attachRemove(sysJailRemove, jailID)
 }
@@ -316,20 +392,23 @@ func attachRemove(call, jailID int32) error {
 			return fmt.Errorf("JID does not exist")
 		}
 	}
+
 	return nil
 }
 
-// ip2int converts the given IP address to an uint32
+// ip2int converts the given IP address to an uint32.
 func ip2int(ip net.IP) uint32 {
 	if len(ip) == 16 {
 		return binary.LittleEndian.Uint32(ip[12:16])
 	}
+
 	return binary.LittleEndian.Uint32(ip)
 }
 
-// uint32ip converts an uint32 representation of a string into an IP
+// uint32ip converts an uint32 representation of a string into an IP.
 func uint32ip(nn uint32) string {
 	ip := make(net.IP, 4)
 	binary.BigEndian.PutUint32(ip, nn)
+
 	return ip.String()
 }
