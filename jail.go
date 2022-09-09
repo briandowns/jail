@@ -291,7 +291,7 @@ func (p Params) buildIovec() ([]syscall.Iovec, error) {
 			return nil, err
 		}
 
-		rv := reflect.ValueOf(v).Elem()
+		rv := reflect.ValueOf(v)
 		var size uint64
 
 		switch rv.Kind() {
