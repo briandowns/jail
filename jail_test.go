@@ -166,7 +166,7 @@ func TestGet(t *testing.T) {
 func Test_getSet(t *testing.T) {
 	type args struct {
 		call  int
-		iov   []syscall.Iovec
+		iov   syscall.Iovec
 		flags uintptr
 	}
 	tests := []struct {
