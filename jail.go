@@ -324,7 +324,7 @@ func Set(params Params, flags uintptr) error {
 		return err
 	}
 
-	return getSet(sysJailSet, iov, flags)
+	return getSet(sysJailSet, iov[0], flags)
 }
 
 // Get retrieves a matching jail based on the provided params.
@@ -334,11 +334,11 @@ func Get(params Params, flags uintptr) error {
 		return err
 	}
 
-	return getSet(sysJailGet, iov, flags)
+	return getSet(sysJailGet, iov[0], flags)
 }
 
 // getSet performas the given syscall with the params and flags provided.
-func getSet(call int, iov []syscall.Iovec, flags uintptr) error {
+func getSet(call int, iov syscall.Iovec, flags uintptr) error {
 	_, _, e1 := syscall.Syscall(uintptr(call), uintptr(unsafe.Pointer(&iov)), 0, flags)
 	if e1 != 0 {
 		switch call {
