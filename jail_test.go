@@ -2,8 +2,9 @@ package jail
 
 import (
 	"reflect"
-	"syscall"
 	"testing"
+
+	"golang.org/x/sys/unix"
 )
 
 func TestOpts_validate(t *testing.T) {
@@ -166,7 +167,7 @@ func TestGet(t *testing.T) {
 func Test_getSet(t *testing.T) {
 	type args struct {
 		call  int
-		iov   syscall.Iovec
+		iov   unix.Iovec
 		flags uintptr
 	}
 	tests := []struct {

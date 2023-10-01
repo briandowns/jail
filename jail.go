@@ -11,8 +11,9 @@ import (
 	"net"
 	"os"
 	"reflect"
-	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/unix"
 )
 
 const EtcdConfigFile = "/etc/jail.conf"
@@ -125,17 +126,17 @@ func Jail(o *Opts) (int32, error) {
 		return 0, err
 	}
 
-	jn, err := syscall.BytePtrFromString(o.Name)
+	jn, err := unix.BytePtrFromString(o.Name)
 	if err != nil {
 		return 0, err
 	}
 
-	jp, err := syscall.BytePtrFromString(o.Path)
+	jp, err := unix.BytePtrFromString(o.Path)
 	if err != nil {
 		return 0, err
 	}
 
-	hn, err := syscall.BytePtrFromString(o.Name)
+	hn, err := unix.BytePtrFromString(o.Name)
 	if err != nil {
 		return 0, err
 	}
@@ -156,7 +157,7 @@ func Jail(o *Opts) (int32, error) {
 		j.IP4 = uintptr(unsafe.Pointer(ia))
 	}
 
-	r1, _, e1 := syscall.Syscall(sysJail, uintptr(unsafe.Pointer(j)), 0, 0)
+	r1, _, e1 := unix.Syscall(sysJail, uintptr(unsafe.Pointer(j)), 0, 0)
 	if e1 != 0 {
 		switch int(e1) {
 		case ErrJailPermDenied:
@@ -190,7 +191,8 @@ func (j *jail) Clone() (int, error) {
 		Name:     j.Name,
 		Hostname: j.Hostname,
 	}
-	r1, _, e1 := syscall.Syscall(sysJail, uintptr(unsafe.Pointer(nj)), 0, 0)
+
+	r1, _, e1 := unix.Syscall(sysJail, uintptr(unsafe.Pointer(nj)), 0, 0)
 	if e1 != 0 {
 		return 0, fmt.Errorf("%d", e1)
 	}
@@ -281,12 +283,12 @@ func (p Params) Validate() error {
 
 // buildIovec takes the containing map value and builds
 // out a slice of syscall.Iovec.
-func (p Params) buildIovec() ([]syscall.Iovec, error) {
-	iovec := make([]syscall.Iovec, len(p))
+func (p Params) buildIovec() ([]unix.Iovec, error) {
+	iovec := make([]unix.Iovec, len(p))
 	var itr int
 
 	for k, v := range p {
-		ib, err := syscall.BytePtrFromString(k)
+		ib, err := unix.BytePtrFromString(k)
 		if err != nil {
 			return nil, err
 		}
@@ -305,7 +307,7 @@ func (p Params) buildIovec() ([]syscall.Iovec, error) {
 			return nil, errors.New("invalid value passed in for key: " + k)
 		}
 
-		iovec[itr] = syscall.Iovec{
+		iovec[itr] = unix.Iovec{
 			Base: ib,
 			Len:  size,
 		}
@@ -338,8 +340,8 @@ func Get(params Params, flags uintptr) error {
 }
 
 // getSet performas the given syscall with the params and flags provided.
-func getSet(call int, iov syscall.Iovec, flags uintptr) error {
-	_, _, e1 := syscall.Syscall(uintptr(call), uintptr(unsafe.Pointer(&iov)), 0, flags)
+func getSet(call int, iov unix.Iovec, flags uintptr) error {
+	_, _, e1 := unix.Syscall(uintptr(call), uintptr(unsafe.Pointer(&iov)), 0, flags)
 	if e1 != 0 {
 		switch call {
 		case sysJailGet:
@@ -386,7 +388,7 @@ func Remove(jailID int32) error {
 // attachRemove
 func attachRemove(call, jailID int32) error {
 	jid := uintptr(unsafe.Pointer(&jailID))
-	_, _, e1 := syscall.Syscall(uintptr(call), jid, 0, 0)
+	_, _, e1 := unix.Syscall(uintptr(call), jid, 0, 0)
 	if e1 != 0 {
 		switch int(e1) {
 		case ErrJailAttachUnprivilegedUser:
