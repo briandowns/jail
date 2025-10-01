@@ -24,7 +24,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("JID: %d - / director listing in jail", jid)
+	fmt.Printf("JID: %d - / directory listing in jail", jid)
 
 	// here so a `jls` can be ran seperately to see that the jail is running
 	time.Sleep(30 * time.Second)
