@@ -108,7 +108,7 @@ type inAddr struct {
 	sAddr inAddrT
 }
 
-// validate makes sure the required fields are present
+// validate makes sure the required fields are present.
 func (o *Opts) validate() error {
 	if o.Path == "" {
 		return errors.New("missing path")
