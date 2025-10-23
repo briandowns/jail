@@ -118,7 +118,7 @@ const (
 
 // The jail_attach() and jail_remove() system calls will fail with either of the
 // below errors
-var (
+const (
 	// ErrJailAttachUnprivilegedUser [EPERM] A user other than the super-user
 	// attempted to attach to or remove a jail.
 	ErrJailAttachUnprivilegedUser = eperm
